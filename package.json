@@ -1,0 +1,44 @@
+{
+  "name": "@eropple/nestjs-auth",
+  "version": "0.1.0",
+  "description": "Comprehensive handling of authentication and authorization for NestJS.",
+  "main": "dist",
+  "author": "Ed Ropple",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eropple/nestjs-authn"
+  },
+  "private": false,
+  "scripts": {
+    "build": "yarn exec -- tsc",
+    "watch": "yarn build --watch",
+    "prepare": "yarn build"
+  },
+  "peerDependencies": {
+    "@nestjs/common": ">=6.0.0",
+    "@nestjs/swagger": ">=3.0.2",
+    "rxjs": ">=6.4.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": ">=6.0.0",
+    "@nestjs/schematics": "^6.3.0",
+    "@nestjs/swagger": ">=3.0.2",
+    "@types/cookie": "^0.3.2",
+    "@types/express": "^4.16.1",
+    "@types/jest": "^24.0.13",
+    "rxjs": ">=6.4.0",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.2.4"
+  },
+  "dependencies": {
+    "@types/bunyan": "^1.8.6",
+    "@types/bunyan-blackhole": "^0.2.2",
+    "bunyan": "^1.8.12",
+    "bunyan-blackhole": "^1.1.1",
+    "cookie": "^0.4.0",
+    "nanomatch": "^1.2.13",
+    "reflect-metadata": "^0.1.13",
+    "utility-types": "^3.7.0"
+  }
+}
