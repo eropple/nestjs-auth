@@ -21,13 +21,15 @@ In my NestJS travels, I haven't found something that hits the important bits:
   that I have a pretty big problem with; in particular, the way the NestJS docs
   lead users by the hand down towards JWT--which is a minefield full of rabid
   alligators wielding rakes for you to step on, don't use JWT unless you know
-  exactly why you need JWT and even then use something better, like [PASETO](),
-  intead--makes me uncomfortable.
+  exactly why you need JWT and even then use something better, like
+  [PASETO](https://paseto.io/), intead--makes me uncomfortable.
 - **Fall into correctness.** It should be hard to do the wrong thing. By opting
-  into `@eropple/nestjs-auth`, you should have a secure-by-default auth
-  scheme and you should have to _explicitly_ opt out, whether to a less secure
-  mode for a particular handler or to a completely unsecured mode. (This is the
-  same principle behind `[@eropple/nestjs-data-sec]()`, for what it's worth.)
+  into `@eropple/nestjs-auth`, you should have a secure-by-default auth scheme
+  and you should have to _explicitly_ opt out, whether to a less secure mode for
+  a particular handler or to a completely unsecured mode. (This is the same
+  principle behind
+  `[@eropple/nestjs-data-sec](https://github.com/eropple/nestjs-data-sec)`, for
+  what it's worth.)
 - **Support resource-based access control.** This is a big one to me. So many
   libraries out there want to give you simple role-based access control, and for
   a lot of stuff that's fine, but if you're building anything with any kind of
@@ -46,20 +48,22 @@ Fastify support is out of my personal scope for it; if you'd like it, I am happy
 to accept PRs.
 
 ## Installation ##
-It's an NPM package. It's called `@eropple/nestjs-auth`. Why do we all put
-"here is how you write `npm install`/`yarn add` in our READMEs"? Why must we
-perturb so many electrons for it? I mean...I think we know by now.
+It's an NPM package. It's called `@eropple/nestjs-auth`. Why do we all put "here
+is how you write `npm install`/`yarn add` in our READMEs"? Why must we perturb
+so many electrons for it? I mean...I think we know by now.
 
 ## Usage ##
 **Before you read all this:** code can speak for itself. Please consider
-checking out [@eropple/nestjs-auth-example](); it is _exhaustively_ commented
-and has end-to-end tests that demonstrate `@eropple/nestjs-auth`'s completeness.
+checking out
+[@eropple/nestjs-auth-example](https://github.com/eropple/nestjs-auth-example);
+it is _exhaustively_ commented and has end-to-end tests that demonstrate
+`@eropple/nestjs-auth`'s completeness.
 
-`@eropple/nestjs-auth` provides the building blocks, but because of its
-focus on extensibility--not prescribing to you how your domain objects should
-work--I'm afraid you're going to have to do the wire-up yourself. Don't worry:
-it's easy, and if it shows you some stuff you're unfamiliar with you're going to
-benefit from learning how it works for your own code.
+`@eropple/nestjs-auth` provides the building blocks, but because of its focus on
+extensibility--not prescribing to you how your domain objects should work--I'm
+afraid you're going to have to do the wire-up yourself. Don't worry: it's easy,
+and if it shows you some stuff you're unfamiliar with you're going to benefit
+from learning how it works for your own code.
 
 (As an aside: I've been asked why this is an interceptor rather than a guard.
 That's because NestJS puts guards before interceptors, and if this was written
@@ -80,10 +84,10 @@ methods to determine who's allowed to access what.
   package) into an `IdentifiedExpressRequest`, which we define as adding the
   `identity` property. This property is an `IdentityBill`, which contains a
   _principal_ ("who is this?"), a _credential_ ("what says that they're them?"),
-  and a set of _scopes_ that we'll use to authorize access to some resources.
-  If the user function determines that the identity is invalid--it's been
-  revoked or has expired over time, for example--then that function can return
-  `false`, and the requestor will immediately receive 401 Unauthorized.
+  and a set of _scopes_ that we'll use to authorize access to some resources. If
+  the user function determines that the identity is invalid--it's been revoked
+  or has expired over time, for example--then that function can return `false`,
+  and the requestor will immediately receive 401 Unauthorized.
 - `HttpAuthnInterceptor` checks that identity. If no identity was found, it
   attaches to the request an _anonymous identity_, which can be given a set of
   scopes of its own.
@@ -94,7 +98,7 @@ methods to determine who's allowed to access what.
   up with the identity on the request, the request continues; otherwise, the
   response is a 401 Unauthorized.
 
-You can see a hypothetical example of a user identity function [right here]().
+You can see a hypothetical example of a user identity function [right here](https://github.com/eropple/nestjs-auth-example/blob/master/src/authx/authn.provider.ts).
 
 _Note:_ if you want, you can just use `HttpAuthnInterceptor`. It wasn't built
 for that, but there's no reason it can't work by itself. Obviously, scopes will
@@ -106,8 +110,8 @@ _grants_, and _rights_.
 
 ##### Scopes #####
 Zero or more _scopes_ are attached to every handler method by using the
-`@AuthzScope()` decorator. An identity that has both a _grant_ and a _right_
-to that scope is authorized to access the handler's endpoint. A list of example
+`@AuthzScope()` decorator. An identity that has both a _grant_ and a _right_ to
+that scope is authorized to access the handler's endpoint. A list of example
 scopes can be found below.
 
 A method with zero scopes attached to it will always be allowed so long as the
@@ -119,16 +123,19 @@ A method with no scope decorator attached to it will, once it hits the
 ##### Grants #####
 Scopes provided to an identity are called _grants_. If a handler uses a scope
 that is included in the identity's grants, then the identity is authorized to
-use that handler. Since we use `[nanomatch]()`, you can use both `*` and `**`
-(_[globstars]()_) in your identity's grants to expand the matches allowed.
+use that handler. Since we use
+`[nanomatch](https://www.npmjs.com/package/nanomatch)`, you can use both `*` and
+`**`
+(_[globstars](https://www.linuxjournal.com/content/globstar-new-bash-globbing-option)_)
+in your identity's grants to expand the matches allowed.
 
 ##### Examples of Scopes and Grants #####
 Here are some examples of hypothetical scopes and grants, based on different
 resources:
 
-- `user/view` - Allows viewing--for example, viewing private information such
-  as email address--of the singleton resource `user`, implied to be "the
-  current user".
+- `user/view` - Allows viewing--for example, viewing private information such as
+  email address--of the singleton resource `user`, implied to be "the current
+  user".
 - `user/edit` - Allows editing the singleton resource `user`, such as editing
   the user's profile.
 - `user/session/list` - Allows listing all sub-resource `session`s within the
@@ -155,12 +162,11 @@ example, a user might give an API token the scope `file/12345/view`--but that
 doesn't mean that the user is _allowed_ to view file `12345`.
 
 To that end, you must pass into `HttpAuthzInterceptor` what we refer to as the
-**rights tree**. This is an object tree; children map to values in the `children`
-If a scope is valid, its corresponding node in
-the rights tree will have a `right` function that returns
-`boolean | Promise<boolean>` so that you can check your source of truth to
-ensure that the identity actually _does_ have the right to access the OAuth2
-scope that you've granted.
+**rights tree**. This is an object tree; children map to values in the
+`children` If a scope is valid, its corresponding node in the rights tree will
+have a `right` function that returns `boolean | Promise<boolean>` so that you
+can check your source of truth to ensure that the identity actually _does_ have
+the right to access the OAuth2 scope that you've granted.
 
 Each node of the tree also may have a `context` method that can inject arbitrary
 values into a local context that will be passed to descending contexts. For
@@ -182,12 +188,15 @@ You can see an example of a rights tree in **Module Injection**, below.
 ### Module Injection ###
 Your application's module, which we'll call `MyAuthModule` for the rest of this
 README, will need to tell NestJS how to build a `HttpAuthnInterceptor` and a
-`HttpAuthzInterceptor`. We do this with a pair of [factory providers](); you
-can see how to do this in [the example project's module injection]().
+`HttpAuthzInterceptor`. We do this with a pair of [factory
+providers](https://docs.nestjs.com/fundamentals/custom-providers#use-factory);
+you can see how to do this in [the example project's module
+injection](https://github.com/eropple/nestjs-auth-example/tree/master/src/authx).
 
 _One helpful note:_ you might want to refer to NestJS's documentation on
-[circular dependencies]() when writing this; forward references are a little
-tricky.
+[circular
+dependencies](https://docs.nestjs.com/fundamentals/circular-dependency) when
+writing this; forward references are a little tricky.
 
 ### Setting Up ###
 Once you've got your module wired up, you need to attach the authentication and
@@ -225,26 +234,15 @@ export FooController {
 I don't recommend this approach for a couple of reasons. The first is that this
 makes authentication and authorization significantly less predictable--if your
 controllers have to opt into auth, you'll eventually write a controller that
-_forgets_ it. Hilarity may ensue. Or not. (Trying to use `@Identity()` without
-a valid identity created by `HttpAuthnInterceptor` will throw an exception,
+_forgets_ it. Hilarity may ensue. Or not. (Trying to use `@Identity()` without a
+valid identity created by `HttpAuthnInterceptor` will throw an exception,
 though.)
 
-There are situations where you'll have to do this, such as using this system
-in an existing NestJS app, but I'd advise against it.
+There are situations where you'll have to do this, such as using this system in
+an existing NestJS app, but I'd advise against it.
 
 ## Future Work ##
 - socket.io authorization/authentication
 - an end-to-end example application using `@eropple/nestjs-auth`
 - tests - the tests for this exist in the original app it was extracted from,
   they need to be cleaned up and made available here.
-
-
-[PASETO]: https://paseto.io/
-[@eropple/nestjs-data-sec]: https://github.com/eropple/nestjs-data-sec
-[@eropple/nestjs-auth-example]: https://github.com/eropple/nestjs-auth-example
-[nanomatch]: https://www.npmjs.com/package/nanomatch
-[globstars]: https://www.linuxjournal.com/content/globstar-new-bash-globbing-option
-[right here]: https://github.com/eropple/nestjs-auth-example/blob/master/src/authx/authn.provider.ts
-[factory provider]: https://docs.nestjs.com/fundamentals/custom-providers#use-factory
-[the example project's module injection]: https://github.com/eropple/nestjs-auth-example/tree/master/src/authx
-[circular dependencies]: https://docs.nestjs.com/fundamentals/circular-dependency
