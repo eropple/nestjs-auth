@@ -51,6 +51,10 @@ It's an NPM package. It's called `@eropple/nestjs-auth`. Why do we all put
 perturb so many electrons for it? I mean...I think we know by now.
 
 ## Usage ##
+**Before you read all this:** code can speak for itself. Please consider
+checking out [@eropple/nestjs-auth-example](); it is _exhaustively_ commented
+and has end-to-end tests that demonstrate `@eropple/nestjs-auth`'s completeness.
+
 `@eropple/nestjs-auth` provides the building blocks, but because of its
 focus on extensibility--not prescribing to you how your domain objects should
 work--I'm afraid you're going to have to do the wire-up yourself. Don't worry:
@@ -90,8 +94,7 @@ methods to determine who's allowed to access what.
   up with the identity on the request, the request continues; otherwise, the
   response is a 401 Unauthorized.
 
-You can see a hypothetical example of a user identity function down below in
-the **Module Injection** section.
+You can see a hypothetical example of a user identity function [right here]().
 
 _Note:_ if you want, you can just use `HttpAuthnInterceptor`. It wasn't built
 for that, but there's no reason it can't work by itself. Obviously, scopes will
@@ -179,140 +182,8 @@ You can see an example of a rights tree in **Module Injection**, below.
 ### Module Injection ###
 Your application's module, which we'll call `MyAuthModule` for the rest of this
 README, will need to tell NestJS how to build a `HttpAuthnInterceptor` and a
-`HttpAuthzInterceptor`. We do this with a pair of [factory providers](). It'll
-look a little something like this:
-
-```ts
-import { FactoryProvider } from '@nestjs/common/interfaces';
-
-const authn: FactoryProvider = {
-  provide: HttpAuthInterceptor,
-  inject: [AuthService],
-  useFactory: (authService: AuthService) => {
-    // This function is how nestjs-auth derives the principal from the request.
-    // For identified requests, the `IdentifiedBill` returned by this method
-    // eventually becomes the `@Identity()` value passed as a parameter.
-    //
-    // `IdentifiedBill` is actually `IdentifiedBill<TPrincipal, TCredential>`,
-    // and we can't actually reify that type, so feel free to create a type that
-    // correctly expresses your principal and credential, i.e.:
-    //
-    // `export type MyAppBill = IdentifiedBill<User, UserToken>;`
-    const principalFn: PrincipalFn =
-      async (headers, cookies, _request): Promise<PrincipalFnRet> => {
-        let input = cookies[TOKEN_HEADER] || headers[TOKEN_HEADER];
-        const token: string | undefined = isArray(input) ? input[0] : input;
-
-        if (!token) {
-          return null;
-        }
-
-        const user = await authService.getUserForToken(token);
-        if (!user) {
-          return false;
-        }
-
-        return new IdentifiedBill(user, token, ["**/*"]);
-      };
-
-    return new HttpAuthnInterceptor({
-      principalFn,
-      anonymousScopes: ["ping"]
-    });
-  }
-};
-
-const authz: FactoryProvider = {
-  provide: HttpAuthzInterceptor,
-  inject: [FileService],
-  useFactory: (fileService: FileService) => {
-    const tree: RightsTree = {
-      children: {
-        user: {
-          children: {
-            view: {
-              // `user/view` is scoped to the logged-in user, and so if the
-              // identity has the grant `user/view` there's no reason to stop
-              // them from logging in. So the right is always true.
-              right: () => true
-            }
-          }
-        },
-        file: {
-          children: {
-            create: {
-              // The FileService knows if the user is _actually_ allowed to create
-              // a file, so we must defer to it here. If this was more elaborated,
-              // file resources might belong to organizations and organizations might
-              // have roles with the ability to create files. In such a case we'd
-              // need to explore whatever permissions we'd granted to those
-              // roles.
-              //
-              // The `request` object is a sub-interface of Express's `Request`
-              // that is guaranteed to include an `identity`. See the
-              // `IdentifiedExpressRequest` interface for details.
-              right: (_scopePart, request, _locals) => fileService.userCanCreate(request.identity.principal)
-            },
-          },
-          // Any scope that isn't `file/create` will fall through to the wildcard.
-          // Both `context` and `right` methods receive the current scope part
-          // as the `scopePart` variable.
-          wildcard: {
-            context: async (scopePart, request, locals) => {
-              // Let's assume that this method returns a `FileInfo` on success
-              // and `null` on failure, so...
-              locals.file = await FileService.getFileInfoById(scopePart);
-
-              // `!!` makes a value explicitly true or false from a truthy or
-              // falsy value, just to make this clearer; therefore, if no
-              // file exists with the id of the `scopePart` value, this will
-              // return false. If context functions return false, 403 Forbidden
-              // will be sent to the client.
-              //
-              // This ensures that an unauthorized client can't poke at your
-              // resource IDs until they get a 404 instead of a 403, and go
-              // "ooh, that one exists!".
-              return !!(locals.file);
-            }
-            children: {
-              view: {
-                right: async (scopePart, request, locals) => {
-                  const file: FileInfo = locals.file!;
-
-                  return FileService.userCanView(request.identity.principal, file);
-                }
-              }
-            }
-          }
-        }
-        ping: {
-          // You can always ping, whether or not you're logged in. You could
-          // (and IMO should) instead go `@AuthzScope([])` rather than wasting
-          // time walking the rights tree for something that always works
-          // regardless of whether you have an identified or anonymous identity,
-          // but it's here for completeness.
-          right: () => true
-        }
-      }
-    };
-
-    return new HttpAuthzInterceptor({
-      tree,
-      logger: ROOT_LOGGER.child({ component: "HttpAuthz" })
-    });
-  }
-};
-
-@Module({
-  imports: [],
-  providers: [
-    AuthService,
-    authn
-  ],
-  exports: [AuthService, AuthRequired, HttpAuthnInterceptor]
-})
-export class AuthModule {}
-```
+`HttpAuthzInterceptor`. We do this with a pair of [factory providers](); you
+can see how to do this in [the example project's module injection]().
 
 _One helpful note:_ you might want to refer to NestJS's documentation on
 [circular dependencies]() when writing this; forward references are a little
@@ -370,7 +241,10 @@ in an existing NestJS app, but I'd advise against it.
 
 [PASETO]: https://paseto.io/
 [@eropple/nestjs-data-sec]: https://github.com/eropple/nestjs-data-sec
+[@eropple/nestjs-auth-example]: https://github.com/eropple/nestjs-auth-example
 [nanomatch]: https://www.npmjs.com/package/nanomatch
 [globstars]: https://www.linuxjournal.com/content/globstar-new-bash-globbing-option
+[right here]: https://github.com/eropple/nestjs-auth-example/blob/master/src/authx/authn.provider.ts
 [factory provider]: https://docs.nestjs.com/fundamentals/custom-providers#use-factory
+[the example project's module injection]: https://github.com/eropple/nestjs-auth-example/tree/master/src/authx
 [circular dependencies]: https://docs.nestjs.com/fundamentals/circular-dependency
