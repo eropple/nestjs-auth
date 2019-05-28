@@ -84,10 +84,11 @@ export class HttpAuthzInterceptor implements NestInterceptor {
     let nodeName = "[ROOT]";
     let node: RightsTree = this._tree;
     const locals: { [key: string]: any } = {};
+    request.locals = locals;
 
     if (this._tree.context) {
       this._logger.trace("Running root node's context.");
-      this._tree.context("[ROOT]", request, locals);
+      this._tree.context("[ROOT]", request);
     }
 
     for (let scopePart of scopeParts) {
@@ -105,7 +106,7 @@ export class HttpAuthzInterceptor implements NestInterceptor {
 
       if (nextNode.context) {
         this._logger.debug("Has context; evaluating.");
-        const contextRet = await nextNode.context(scopePart, request, locals);
+        const contextRet = await nextNode.context(scopePart, request);
         if (contextRet === false) {
           this._logger.debug("Context returned false, failing on scope.");
           return false;
@@ -119,7 +120,7 @@ export class HttpAuthzInterceptor implements NestInterceptor {
       throw new Error(`Scope '${scope}' is using node '${nodeName}' as a terminal node, but it has no rights function.`);
     }
 
-    return (await node!.right(scopeParts[scopeParts.length - 1], request, locals));
+    return (await node!.right(scopeParts[scopeParts.length - 1], request));
   }
 
   private async _validateScopesAgainstRights(request: IdentifiedExpressRequest, scopes: ReadonlyArray<string>): Promise<boolean> {

@@ -168,12 +168,17 @@ have a `right` function that returns `boolean | Promise<boolean>` so that you
 can check your source of truth to ensure that the identity actually _does_ have
 the right to access the OAuth2 scope that you've granted.
 
-Each node of the tree also may have a `context` method that can inject arbitrary
-values into a local context that will be passed to descending contexts. For
-example, if a path segment is a wildcard that represents a file ID and the file
-ID doesn't exist, the `context` method can return a falsy value to tell the
-requestor that they are unauthorized. `context` methods never _positively_
-affirm a right, however; only a `right` method can do that.
+Once we've gotten to the authz step, you can take as guaranteed that we have
+added a `locals` field to the request. As such, each node may have a `context`
+method that can test against the current request, potentially to short-circuit
+and return 403 early but also to potentially store request-local data for other
+uses.. For example, if a path segment is a wildcard that represents a file ID
+and the file ID doesn't exist, the `context` method can return a falsy value to
+tell the requestor that they are unauthorized; if it does exist, the `context`
+method can attach the file entity to `request.locals` (which can then be used by
+deeper parts of the rights tree or be used for parameter injection in your
+handlers). `context` methods never _positively_ affirm a right, however; only a
+`right` method can do that.
 
 The above example of a nonexistent file is a good time to note that neither
 `context` nor `right` methods _do not_ handle exceptions; throwing an
