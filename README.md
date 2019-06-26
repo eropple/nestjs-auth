@@ -1,4 +1,24 @@
 # `@eropple/nestjs-auth` #
+## Current Status ##
+`0.2.x` is being used, in anger, on multiple production apps, at my current
+employer and by other NestJS users.
+
+Iteration toward `0.3.0` will focus on adding more type-safety and type checking
+to `nestjs-auth`, with a longer-term eye towards simplifying setup by providing
+a single factory to inject into the DI context with the full scope of a
+project's needs.
+
+### Recent Changes ###
+#### 0.2.1 ####
+- Added generic types (with concrete default parameters) to ease type safety
+  concerns when writing things like rights trees. In 0.3.0, the top-level
+  generic parameters (things like `HttpAuthnInterceptor`) will lose their
+  default values (where they currently map directly to `IdentifiedBill`), to
+  encourage consumers to define their own top-level types and use them in their
+  applications.
+
+## Introduction ##
+
 Authentication and authorization on the web sucks.
 
 There, I said it.
@@ -248,6 +268,5 @@ an existing NestJS app, but I'd advise against it.
 
 ## Future Work ##
 - socket.io authorization/authentication
-- an end-to-end example application using `@eropple/nestjs-auth`
 - tests - the tests for this exist in the original app it was extracted from,
   they need to be cleaned up and made available here.

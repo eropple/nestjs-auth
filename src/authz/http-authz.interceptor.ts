@@ -14,13 +14,15 @@ import { observableResponse } from "../util";
 // TODO: create a types library for nanomatch
 const nanomatch = require("nanomatch");
 
-export interface HttpAuthzOptions {
+export interface HttpAuthzOptions<
+  TIdentity extends IdentityBill
+> {
   /**
    * The application's rights tree, used to determine whether a scope included
    * in an identity's grant is actually valid for that identity to grant in the
    * first place.
    */
-  tree: RightsTree;
+  tree: RightsTree<TIdentity, IdentifiedExpressRequest<TIdentity>>;
 
   /**
    * An optional logger that will provide detailed introspection into the
@@ -43,12 +45,15 @@ export interface HttpAuthzOptions {
  * handler's specified OAuth2 scopes against the scopes in the identity. Check
  * the documentation for details.
  */
-export class HttpAuthzInterceptor implements NestInterceptor {
-  private readonly _tree: RightsTree;
+export class HttpAuthzInterceptor<
+  // TODO: in 0.3.0, this should not have a default.
+  TIdentity extends IdentityBill = IdentityBill
+> implements NestInterceptor {
+  private readonly _tree: RightsTree<TIdentity, IdentifiedExpressRequest<TIdentity>>;
   private readonly _logger: Bunyan;
 
   constructor(
-    private readonly _options: HttpAuthzOptions
+    private readonly _options: HttpAuthzOptions<TIdentity>
   ) {
     this._tree = this._options.tree;
     this._logger = this._options.logger || bunyanBlackHole("HttpAuthzInterceptor");
@@ -58,7 +63,7 @@ export class HttpAuthzInterceptor implements NestInterceptor {
     return observableResponse(response, { error: "Forbidden." }, 403);
   }
 
-  private _getScopes(request: IdentifiedExpressRequest, handler: Function): ReadonlyArray<string> {
+  private _getScopes(request: IdentifiedExpressRequest<TIdentity>, handler: Function): ReadonlyArray<string> {
     const scopesArg: AuthzScopeArg | undefined = Reflect.getMetadata(AUTHZ_SCOPES, handler);
     if (!scopesArg) {
       throw new Error(`Handler for request '${request.url}' does not have @AuthzScope().`);
@@ -79,10 +84,10 @@ export class HttpAuthzInterceptor implements NestInterceptor {
     return (nanomatch(scopes, grants).length === scopes.length);
   }
 
-  private async _validateScopeAgainstRights(request: IdentifiedExpressRequest, scope: string): Promise<boolean> {
+  private async _validateScopeAgainstRights(request: IdentifiedExpressRequest<TIdentity>, scope: string): Promise<boolean> {
     const scopeParts = scope.split("/");
     let nodeName = "[ROOT]";
-    let node: RightsTree = this._tree;
+    let node: RightsTree<TIdentity, IdentifiedExpressRequest<TIdentity>> = this._tree;
     const locals: { [key: string]: any } = {};
     request.locals = locals;
 
@@ -93,7 +98,7 @@ export class HttpAuthzInterceptor implements NestInterceptor {
 
     for (let scopePart of scopeParts) {
       this._logger.debug(`Testing node '${scopePart}'.`);
-      let nextNode: RightsTree | undefined = undefined;
+      let nextNode: RightsTree<TIdentity, IdentifiedExpressRequest<TIdentity>> | undefined = undefined;
 
       if (node.children) {
         nextNode = node.children[scopePart];
@@ -123,14 +128,14 @@ export class HttpAuthzInterceptor implements NestInterceptor {
     return (await node!.right(scopeParts[scopeParts.length - 1], request));
   }
 
-  private async _validateScopesAgainstRights(request: IdentifiedExpressRequest, scopes: ReadonlyArray<string>): Promise<boolean> {
+  private async _validateScopesAgainstRights(request: IdentifiedExpressRequest<TIdentity>, scopes: ReadonlyArray<string>): Promise<boolean> {
     const rets = await Promise.all(scopes.map(s => this._validateScopeAgainstRights(request, s)));
 
     return rets.every(ret => ret);
   }
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
-    const request: IdentifiedExpressRequest = context.switchToHttp().getRequest();
+    const request: IdentifiedExpressRequest<TIdentity> = context.switchToHttp().getRequest();
     const identity: IdentityBill = request.identity;
     const response: ServerResponse = context.switchToHttp().getResponse();
     const handler = context.getHandler();

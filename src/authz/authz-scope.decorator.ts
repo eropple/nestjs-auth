@@ -2,9 +2,14 @@ import { SetMetadata } from '@nestjs/common';
 
 import { AUTHZ_SCOPES } from '../metadata-keys';
 import { IdentifiedExpressRequest } from '../helper-types';
+import { IdentityBill } from '../types';
 
-export type AuthzScopeArgFn = ((req: IdentifiedExpressRequest) => Array<string> | string);
-export type AuthzScopeArg = AuthzScopeArgFn | Array<string> | string;
+export type AuthzScopeArgFn<
+  TIdentity extends IdentityBill = IdentityBill
+> = ((req: IdentifiedExpressRequest<TIdentity>) => Array<string> | string);
+export type AuthzScopeArg<
+  TIdentity extends IdentityBill = IdentityBill
+> = AuthzScopeArgFn<TIdentity> | Array<string> | string;
 
 /**
  * Defines a scope (think OAuth2 scope) that `HttpAuthzInterceptor` will
@@ -18,4 +23,8 @@ export type AuthzScopeArg = AuthzScopeArgFn | Array<string> | string;
  *
  * @param scope a scope, a list of scopes, or a function to return the same
  */
-export const AuthzScope = (scope: AuthzScopeArg) => SetMetadata(AUTHZ_SCOPES, scope);
+export function AuthzScope<
+  TIdentity extends IdentityBill = IdentityBill
+>(scope: AuthzScopeArg<TIdentity>) {
+  return SetMetadata(AUTHZ_SCOPES, scope);
+}

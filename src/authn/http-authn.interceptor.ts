@@ -1,7 +1,7 @@
 import * as Bunyan from "bunyan";
 import bunyanBlackHole from "bunyan-blackhole";
 import { CallHandler, ExecutionContext, NestInterceptor, Type } from '@nestjs/common';
-import { IncomingMessage, ServerResponse } from 'http';
+import { ServerResponse } from 'http';
 import { Observable } from 'rxjs';
 import { parse as cookieParse } from "cookie";
 import { Request as ExpressRequest } from "express";
