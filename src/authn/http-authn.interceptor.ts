@@ -7,22 +7,26 @@ import { parse as cookieParse } from "cookie";
 import { Request as ExpressRequest } from "express";
 
 
-import { IdentifiedBill, IdentityBill, AnonymousBill } from '../types';
+import { IdentifiedBill, IdentityBill, AnonymousBill, IdentifiedBillBase } from '../types';
 import { StringTo, IdentifiedExpressRequest } from '../helper-types';
 import { AuthnStatus } from './authn-status.enum';
 import { AUTHN_STATUS } from '../metadata-keys';
 import { observableResponse } from "../util";
 
-export type PrincipalFnRet<TPrincipal = any, TCredential = any> =
-  IdentifiedBill<TPrincipal, TCredential> |
+export type PrincipalFnRet<
+  TIdentifiedBill extends IdentifiedBillBase
+> =
+  TIdentifiedBill |
   null |
   false;
 
-export type PrincipalFn =
+export type PrincipalFn<TIdentifiedBill extends IdentifiedBillBase> =
 (headers: StringTo<string | string[] | undefined>, cookies: StringTo<string>, request: ExpressRequest) =>
-  PrincipalFnRet | Promise<PrincipalFnRet>
+  PrincipalFnRet<TIdentifiedBill> | Promise<PrincipalFnRet<TIdentifiedBill>>
 
-export interface HttpAuthnOptions {
+export interface HttpAuthnOptions<
+  TIdentifiedBill extends IdentifiedBillBase
+> {
   /**
    * The function that `nestjs-auth` should use to determine a principal from
    * a request. This might be a session token lookup, decoding a JWT (but please
@@ -43,7 +47,7 @@ export interface HttpAuthnOptions {
    *    _invalid_ (as opposed to _nonexistent_), such as when a user attempts
    *    to use an expired session token.
    */
-  principalFn: PrincipalFn
+  principalFn: PrincipalFn<TIdentifiedBill>
 
   /**
    * The set of scopes to grant to an anonymous identity.
@@ -65,16 +69,18 @@ export interface HttpAuthnOptions {
  * whether or not to return a 401 Unauthorized to the requestor or to pass the
  * request on down the chain.
  */
-export class HttpAuthnInterceptor implements NestInterceptor {
+export class HttpAuthnInterceptor<
+  TIdentifiedBill extends IdentifiedBillBase
+> implements NestInterceptor {
   private readonly _logger: Bunyan;
 
   constructor(
-    private readonly _options: HttpAuthnOptions
+    private readonly _options: HttpAuthnOptions<TIdentifiedBill>
   ) {
     this._logger = this._options.logger || bunyanBlackHole("HttpAuthzInterceptor");
   }
 
-  private async _doAuthn(request: ExpressRequest): Promise<PrincipalFnRet> {
+  private async _doAuthn(request: ExpressRequest): Promise<PrincipalFnRet<TIdentifiedBill>> {
     const headers = request.headers;
     const cookies = cookieParse(headers["cookie"] || "");
 
@@ -85,7 +91,7 @@ export class HttpAuthnInterceptor implements NestInterceptor {
     return observableResponse(response, { error: "Unauthorized." }, 401);
   }
 
-  private _buildIdentity(authn: PrincipalFnRet) {
+  private _buildIdentity(authn: PrincipalFnRet<TIdentifiedBill>) {
     if (authn instanceof IdentifiedBill) {
       // anonymous; create an anonymous identity bill
       return authn;

@@ -1,6 +1,6 @@
 {
   "name": "@eropple/nestjs-auth",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Comprehensive handling of authentication and authorization for NestJS.",
   "main": "dist",
   "author": "Ed Ropple",

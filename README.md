@@ -9,6 +9,11 @@ a single factory to inject into the DI context with the full scope of a
 project's needs.
 
 ### Recent Changes ###
+#### 0.2.2 ####
+- Continued extending type system, this time on the authn side, to reduce the
+  number of places where programmers have to trust their feeble brainmeats to
+  do the right thing.
+
 #### 0.2.1 ####
 - Added generic types (with concrete default parameters) to ease type safety
   concerns when writing things like rights trees. In 0.3.0, the top-level

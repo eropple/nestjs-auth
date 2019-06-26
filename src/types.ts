@@ -5,15 +5,23 @@ export interface IdentityBill {
   isAnonymous: boolean;
 }
 
-export class IdentifiedBill<TPrincipal, TCredential> implements IdentityBill {
-  constructor (
-    readonly principal: TPrincipal,
-    readonly credential: TCredential,
+export abstract class IdentifiedBillBase {
+  constructor(
     readonly grants: ReadonlyArray<string>
   ) {}
 
   get isIdentified(): true { return true; }
   get isAnonymous(): false { return false; }
+}
+
+export class IdentifiedBill<TPrincipal, TCredential> extends IdentifiedBillBase {
+  constructor (
+    readonly principal: TPrincipal,
+    readonly credential: TCredential,
+    grants: ReadonlyArray<string>
+  ) {
+    super(grants);
+  }
 }
 
 export class AnonymousBill implements IdentityBill {
