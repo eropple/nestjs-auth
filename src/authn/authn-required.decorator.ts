@@ -11,4 +11,5 @@ import { AuthnStatus } from './authn-status.enum';
  * You shouldn't do this regularly, but sometimes it makes your code easier to
  * read.
  */
-export const AuthnRequired = () => SetMetadata(AUTHN_STATUS, AuthnStatus.REQUIRED);
+export const AuthnRequired = () =>
+  SetMetadata(AUTHN_STATUS, AuthnStatus.REQUIRED);

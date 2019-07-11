@@ -1,3 +1,4 @@
+// tslint:disable: max-classes-per-file
 export interface IdentityBill {
   grants: ReadonlyArray<string>;
 
@@ -6,29 +7,36 @@ export interface IdentityBill {
 }
 
 export abstract class IdentifiedBillBase {
-  constructor(
-    readonly grants: ReadonlyArray<string>
-  ) {}
+  constructor(readonly grants: ReadonlyArray<string>) {}
 
-  get isIdentified(): true { return true; }
-  get isAnonymous(): false { return false; }
+  get isIdentified(): true {
+    return true;
+  }
+  get isAnonymous(): false {
+    return false;
+  }
 }
 
-export class IdentifiedBill<TPrincipal, TCredential> extends IdentifiedBillBase {
-  constructor (
+export class IdentifiedBill<
+  TPrincipal,
+  TCredential
+> extends IdentifiedBillBase {
+  constructor(
     readonly principal: TPrincipal,
     readonly credential: TCredential,
-    grants: ReadonlyArray<string>
+    grants: ReadonlyArray<string>,
   ) {
     super(grants);
   }
 }
 
 export class AnonymousBill implements IdentityBill {
-  constructor (
-    readonly grants: ReadonlyArray<string>
-  ) {}
+  constructor(readonly grants: ReadonlyArray<string>) {}
 
-  get isIdentified(): false { return false; }
-  get isAnonymous(): true { return true; }
+  get isIdentified(): false {
+    return false;
+  }
+  get isAnonymous(): true {
+    return true;
+  }
 }

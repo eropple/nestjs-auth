@@ -4,12 +4,13 @@ import { AUTHZ_SCOPES } from '../metadata-keys';
 import { IdentifiedExpressRequest } from '../helper-types';
 import { IdentityBill } from '../types';
 
-export type AuthzScopeArgFn<
-  TIdentity extends IdentityBill = IdentityBill
-> = ((req: IdentifiedExpressRequest<TIdentity>) => Array<string> | string);
-export type AuthzScopeArg<
-  TIdentity extends IdentityBill = IdentityBill
-> = AuthzScopeArgFn<TIdentity> | Array<string> | string;
+export type AuthzScopeArgFn<TIdentity extends IdentityBill = IdentityBill> = (
+  req: IdentifiedExpressRequest<TIdentity>,
+) => Array<string> | string;
+export type AuthzScopeArg<TIdentity extends IdentityBill = IdentityBill> =
+  | AuthzScopeArgFn<TIdentity>
+  | Array<string>
+  | string;
 
 /**
  * Defines a scope (think OAuth2 scope) that `HttpAuthzInterceptor` will
@@ -23,8 +24,8 @@ export type AuthzScopeArg<
  *
  * @param scope a scope, a list of scopes, or a function to return the same
  */
-export function AuthzScope<
-  TIdentity extends IdentityBill = IdentityBill
->(scope: AuthzScopeArg<TIdentity>) {
+export function AuthzScope<TIdentity extends IdentityBill = IdentityBill>(
+  scope: AuthzScopeArg<TIdentity>,
+) {
   return SetMetadata(AUTHZ_SCOPES, scope);
 }

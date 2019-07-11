@@ -1,5 +1,5 @@
 export enum AuthnStatus {
-  REQUIRED = "required",
-  OPTIONAL = "optional",
-  DISALLOWED = "disallowed"
+  REQUIRED = 'required',
+  OPTIONAL = 'optional',
+  DISALLOWED = 'disallowed',
 }

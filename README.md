@@ -11,8 +11,8 @@ project's needs.
 ### Recent Changes ###
 #### 0.2.2 ####
 - Continued extending type system, this time on the authn side, to reduce the
-  number of places where programmers have to trust their feeble brainmeats to
-  do the right thing.
+  number of places where programmers have to trust their feeble brainmeats to do
+  the right thing.
 
 #### 0.2.1 ####
 - Added generic types (with concrete default parameters) to ease type safety
@@ -73,9 +73,10 @@ Fastify support is out of my personal scope for it; if you'd like it, I am happy
 to accept PRs.
 
 ## Installation ##
-It's an NPM package. It's called `@eropple/nestjs-auth`. Why do we all put "here
-is how you write `npm install`/`yarn add` in our READMEs"? Why must we perturb
-so many electrons for it? I mean...I think we know by now.
+It's an NPM package. It's called `@eropple/nestjs-auth`. Wield your package
+manager of choice and install it.
+
+Just remember that you gotta have NestJS 6.5 or newer to make this work.
 
 ## Usage ##
 **Before you read all this:** code can speak for itself. Please consider
@@ -96,26 +97,34 @@ as a guard it'd mean that you couldn't put a logging interceptor around requests
 that are rejected. It's harder to debug and harder to reason about.)
 
 ### How It Works ###
-There's perilously little magic in `@eropple/nestjs-auth`. It provides two
-interceptors, `HttpAuthnInterceptor` and `HttpAuthzInterceptor`, which need to
-be attached to a module for injection (we'll cover that later). These
-interceptors use their startup config and a set of decorators applied to handler
-methods to determine who's allowed to access what.
+There's perilously little magic in `@eropple/nestjs-auth`. It provides one
+interceptor, `HttpAuthxInterceptor`, which needs to be attached to a module for
+injection (we'll cover that later). These interceptors use their startup config
+and a set of decorators applied to handler methods to determine who's allowed to
+access what.
+
+**NOTE:** Version 0.2.x used two interceptors. This proved to be not-that-great
+if you wanted to use a request-scoped `nestjs-auth` (for example, you use
+request-scoped services in your rights tree), because even after the NestJS 6.5
+fixes that allow you to properly do request-scoped interceptors the ordering of
+them is undefined. In practice, they load in the order they're declared, but I
+don't really want to rely on that and I don't think you should either, so 0.3.0
+collapses them into a single interceptor.
 
 #### Authentication ###
-- `HttpAuthnInterceptor` retrieves an identity (PASETO token, session token
-  string, etc.) through a user-defined function. This identity is stashed on the
-  request object, turning it from an Express `Request` (from the NodeJS `http`
-  package) into an `IdentifiedExpressRequest`, which we define as adding the
-  `identity` property. This property is an `IdentityBill`, which contains a
-  _principal_ ("who is this?"), a _credential_ ("what says that they're them?"),
-  and a set of _scopes_ that we'll use to authorize access to some resources. If
-  the user function determines that the identity is invalid--it's been revoked
-  or has expired over time, for example--then that function can return `false`,
-  and the requestor will immediately receive 401 Unauthorized.
-- `HttpAuthnInterceptor` checks that identity. If no identity was found, it
-  attaches to the request an _anonymous identity_, which can be given a set of
-  scopes of its own.
+- The _authn step_ retrieves an identity (PASETO token, session token string,
+  etc.) through a user-defined function. This identity is stashed on the request
+  object, turning it from an Express `Request` (from the NodeJS `http` package)
+  into an `IdentifiedExpressRequest`, which we define as adding the `identity`
+  property. This property is an `IdentityBill`, which contains a _principal_
+  ("who is this?"), a _credential_ ("what says that they're them?"), and a set
+  of _scopes_ that we'll use to authorize access to some resources. If the user
+  function determines that the identity is invalid--it's been revoked or has
+  expired over time, for example--then that function can return `false`, and the
+  requestor will immediately receive 401 Unauthorized.
+- The _authz step_ checks that identity. If no identity was found, it attaches
+  to the request an _anonymous identity_, which can be given a set of scopes of
+  its own.
 - `HttpAuthnInterceptor` inspects the controller and its handler. By default,
   _all endpoints_ require authentication, but you can decorate your handlers
   with `@AuthnOptional()` to allow anonymous identities or with
@@ -123,11 +132,6 @@ methods to determine who's allowed to access what.
   up with the identity on the request, the request continues; otherwise, the
   response is a 401 Unauthorized.
 
-You can see a hypothetical example of a user identity function [right here](https://github.com/eropple/nestjs-auth-example/blob/master/src/authx/authn.provider.ts).
-
-_Note:_ if you want, you can just use `HttpAuthnInterceptor`. It wasn't built
-for that, but there's no reason it can't work by itself. Obviously, scopes will
-then be ignored.
 
 #### Authorization ####
 `@eropple/nestjs-auth` relies on three concepts for authorization: _scopes_,
@@ -217,9 +221,9 @@ You can see an example of a rights tree in **Module Injection**, below.
 
 ### Module Injection ###
 Your application's module, which we'll call `MyAuthModule` for the rest of this
-README, will need to tell NestJS how to build a `HttpAuthnInterceptor` and a
-`HttpAuthzInterceptor`. We do this with a pair of [factory
-providers](https://docs.nestjs.com/fundamentals/custom-providers#use-factory);
+README, will need to tell NestJS how to build a `HttpAuthxInterceptor`. We do
+this with a [factory
+provider](https://docs.nestjs.com/fundamentals/custom-providers#use-factory);
 you can see how to do this in [the example project's module
 injection](https://github.com/eropple/nestjs-auth-example/tree/master/src/authx).
 
@@ -240,36 +244,43 @@ import {
   HttpAuthzInterceptor
 } from "@eropple/nestjs-auth";
 
-// put this after your logging interceptor but before any others
-app.useGlobalInterceptors(
-  app.get(HttpAuthnInterceptor),
-  app.get(HttpAuthzInterceptor)
-);
+export const authn: FactoryProvider = {
+  provide: APP_INTERCEPTOR,
+  scope: Scope.REQUEST,
+  inject: [InjectorKeys.LOGGER, 'AuthxConfig'],
+  useFactory: (logger: Bunyan, cfg: AuthxConfig) => {
+    const principalFn: PrincipalFn<KonIdentifiedBill<Principal>> = async (
+      headers,
+      _cookies,
+    ) => {
+      const userAuthHeader = headers['authorization'];
+
+      if (userAuthHeader && userAuthHeader.length > 0) {
+        const user = doLoginStuff(userAuthHeader);
+        if (user)
+      } else {
+        return null;
+      }
+    };
+
+    return new HttpAuthnInterceptor<KonIdentifiedBill<Principal>>({
+      principalFn,
+      logger: logger.child({ component: 'HttpAuthn' }),
+      anonymousScopes: ANONYMOUS_SCOPES,
+    });
+  },
+};
+
+
+@Module({
+
+})
 ```
 
 I'm of two minds about global interceptors and guards. You have to replicate
 them in testing situations (please remember to add this to your E2E tests, too!)
 and that can lead to some confusion. On the other hand, this is the _only_ way
 to assert "everything is authenticated and authorized by default".
-
-#### The Dubious Path of Only Moderate Happiness ####
-```ts
-@UseInterceptors(HttpAuthnInterceptor, HttpAuthzInterceptor)
-@Controller("foo")
-export FooController {
-
-}
-```
-
-I don't recommend this approach for a couple of reasons. The first is that this
-makes authentication and authorization significantly less predictable--if your
-controllers have to opt into auth, you'll eventually write a controller that
-_forgets_ it. Hilarity may ensue. Or not. (Trying to use `@Identity()` without a
-valid identity created by `HttpAuthnInterceptor` will throw an exception,
-though.)
-
-There are situations where you'll have to do this, such as using this system in
-an existing NestJS app, but I'd advise against it.
 
 ## Future Work ##
 - socket.io authorization/authentication

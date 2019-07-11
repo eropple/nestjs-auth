@@ -14,4 +14,5 @@ import { AuthnStatus } from './authn-status.enum';
  * Formally, the @Identity parameter should take as a type something that looks
  * like `IdentityBill<TPrincipal, TCredential> | AnonymousBill`.
  */
-export const AuthnOptional = () => SetMetadata(AUTHN_STATUS, AuthnStatus.OPTIONAL);
+export const AuthnOptional = () =>
+  SetMetadata(AUTHN_STATUS, AuthnStatus.OPTIONAL);
