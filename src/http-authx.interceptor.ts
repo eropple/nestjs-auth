@@ -285,7 +285,7 @@ export class HttpAuthxInterceptor<
       grants,
     );
     if (!scopesAgainstGrants) {
-      this.logger.debug('Request failed to validate scopes against grants.');
+      this.logger.debug({ scopes, grants }, 'Request failed to validate scopes against grants.');
       return this._forbidden(response);
     }
 
@@ -294,7 +294,7 @@ export class HttpAuthxInterceptor<
       scopes,
     );
     if (!scopesAgainstRights) {
-      this.logger.debug('Request failed to validate scopes against rights.');
+      this.logger.debug({ scopes, grants }, 'Request failed to validate scopes against rights.');
       return this._forbidden(response);
     }
 
