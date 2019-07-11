@@ -238,44 +238,7 @@ the authorization interceptors to your application. There are two ways to do
 this; one is way better than the other.
 
 #### The Good, Happy Path That Leads To Success ####
-```ts
-import {
-  HttpAuthnInterceptor,
-  HttpAuthzInterceptor
-} from "@eropple/nestjs-auth";
-
-export const authn: FactoryProvider = {
-  provide: APP_INTERCEPTOR,
-  scope: Scope.REQUEST,
-  inject: [InjectorKeys.LOGGER, 'AuthxConfig'],
-  useFactory: (logger: Bunyan, cfg: AuthxConfig) => {
-    const principalFn: PrincipalFn<KonIdentifiedBill<Principal>> = async (
-      headers,
-      _cookies,
-    ) => {
-      const userAuthHeader = headers['authorization'];
-
-      if (userAuthHeader && userAuthHeader.length > 0) {
-        const user = doLoginStuff(userAuthHeader);
-        if (user)
-      } else {
-        return null;
-      }
-    };
-
-    return new HttpAuthnInterceptor<KonIdentifiedBill<Principal>>({
-      principalFn,
-      logger: logger.child({ component: 'HttpAuthn' }),
-      anonymousScopes: ANONYMOUS_SCOPES,
-    });
-  },
-};
-
-
-@Module({
-
-})
-```
+It's a little long to put here. Please take a look at [the example project](https://github.com/eropple/nestjs-auth-example/tree/master/src/authx).
 
 I'm of two minds about global interceptors and guards. You have to replicate
 them in testing situations (please remember to add this to your E2E tests, too!)
