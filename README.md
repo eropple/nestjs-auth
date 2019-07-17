@@ -3,11 +3,6 @@
 `0.2.x` is being used, in anger, on multiple production apps, at my current
 employer and by other NestJS users.
 
-Iteration toward `0.3.0` will focus on adding more type-safety and type checking
-to `nestjs-auth`, with a longer-term eye towards simplifying setup by providing
-a single factory to inject into the DI context with the full scope of a
-project's needs.
-
 ### Recent Changes ###
 #### 0.3.0 / 0.3.1 (bug fix) ####
 - `nestjs-auth` now expects template arguments around principals and (optionally)
