@@ -9,6 +9,17 @@ a single factory to inject into the DI context with the full scope of a
 project's needs.
 
 ### Recent Changes ###
+#### 0.3.0 / 0.3.1 (bug fix) ####
+- `nestjs-auth` now expects template arguments around principals and (optionally)
+  credentials. Take a look at [the example](https://github.com/eropple/nestjs-auth-example)
+  for details.
+- Replaced `HttpAuthnInterceptor` and `HttpAuthzInterceptor` with a single
+  interceptor, `HttpAuthxInterceptor`. This is because NestJS offers no explicit
+  way to guarantee that two request-scoped interceptors will run in the correct
+  order. Order-of-declaration works but I don't consider it sufficiently reliable
+  and it's easy enough to pass an `always` right as part of the tree if you wish
+  to opt out of authz.
+
 #### 0.2.2 ####
 - Continued extending type system, this time on the authn side, to reduce the
   number of places where programmers have to trust their feeble brainmeats to do
