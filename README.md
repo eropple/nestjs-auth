@@ -1,6 +1,8 @@
 # `@eropple/nestjs-auth` #
+[![npm version](https://badge.fury.io/js/%40eropple%2Fnestjs-auth.svg)](https://badge.fury.io/js/%40eropple%2Fnestjs-auth)
+
 ## Current Status ##
-`0.2.x` is being used, in anger, on multiple production apps, at my current
+`0.3.x` is being used, in anger, on multiple production apps, at my current
 employer and by other NestJS users.
 
 ### Recent Changes ###
