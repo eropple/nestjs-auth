@@ -49,6 +49,27 @@ export interface HttpAuthxOptions<
    * Authorization-specific settings.
    */
   authz: HttpAuthzOptions<TIdentity>;
+
+  /**
+   * Creator for the response body provided when a 403 Forbidden is being sent.
+   * Useful for integrating with something like `@eropple/nestjs-openapi3` in
+   * order to send back typed errors.
+   */
+  forbiddenResponse?: (
+    request: ExpressRequest,
+    response: ServerResponse,
+    scopes: ReadonlyArray<string>,
+  ) => StringTo<any>;
+
+  /**
+   * Creator for the response body provided when a 401 Unauthorized is being
+   * sent. Useful for integrating with something like `@eropple/nestjs-openapi3`
+   * in order to send back typed errors.
+   */
+  unauthorizedResponse?: (
+    request: ExpressRequest,
+    response: ServerResponse,
+  ) => StringTo<any>;
 }
 
 /**
@@ -61,17 +82,17 @@ export interface HttpAuthxOptions<
  * `@AuthnDisallowed()`) to decide whether or not to return a 401 Unauthorized
  * to the requestor or to pass the request on down the chain.
  *
- * For authorization (formerly `HttpAuthzInterceptor`):  nestjs-auth
- * functionally operators on the notion of scopes, as per OAuth2 (not that it's
- * the _best_ way to do this, but it's the most common way you see it in the
- * wild). These scopes are just a list of strings (there's an implicit "and" for
- * these scopes).
+ * For authorization (formerly `HttpAuthzInterceptor`): nestjs-auth functionally
+ * operates on the notion of scopes, as per OAuth2 (not that it's the _best_ way
+ * to do this, but it's the most common way you see it in the wild). These
+ * scopes are just a list of strings (there's an implicit "and" for these
+ * scopes).
  *
  * **Something to pay attention to:** unlike some other implementations of
  * OAuth2 scopes, we use the forward slash character, `/`, as a separator to
  * indicate hierarchy. This is because we use file-style globbing to match the
- * handler's specified OAuth2 scopes against the scopes in the identity. Check
- * the documentation for details.
+ * handler's specified scopes against the grants in the identity. Check the
+ * documentation for details.
  */
 export class HttpAuthxInterceptor<
   TIdentityBill extends IdentityBill,
@@ -92,8 +113,15 @@ export class HttpAuthxInterceptor<
   }
 
   //#region authn
-  private _unauthorized(response: ServerResponse): Observable<any> {
-    return observableResponse(response, { error: 'Unauthorized.' }, 401);
+  private _unauthorized(
+    request: ExpressRequest,
+    response: ServerResponse,
+  ): Observable<any> {
+    const body =
+      this.options.unauthorizedResponse
+        ? this.options.unauthorizedResponse(request, response)
+        : { error: 'Forbidden.' };
+    return observableResponse(response, body, 401);
   }
 
   private async _doAuthn(
@@ -143,8 +171,16 @@ export class HttpAuthxInterceptor<
   //#endregion authn
 
   //#region authz
-  private _forbidden(response: ServerResponse): Observable<any> {
-    return observableResponse(response, { error: 'Forbidden.' }, 403);
+  private _forbidden(
+    request: ExpressRequest,
+    response: ServerResponse,
+    scopes: ReadonlyArray<string>,
+  ): Observable<any> {
+    const body =
+      this.options.forbiddenResponse
+        ? this.options.forbiddenResponse(request, response, scopes)
+        : { error: 'Forbidden.' };
+    return observableResponse(response, body, 403);
   }
 
   private _getScopes(
@@ -265,14 +301,14 @@ export class HttpAuthxInterceptor<
 
     // we should reject the request's credentials as invalid
     if (authn === false) {
-      return this._unauthorized(response);
+      return this._unauthorized(request, response);
     } else {
       // we have a _potentially_ valid request; is it anonymous or identified?
       // (this confuses the typechecker but it is correct in practice)
       (request.identity as any) = this._buildIdentity(authn);
 
       if (!this._shortCircuitBadAuth(request.identity, controller, handler)) {
-        return this._unauthorized(response);
+        return this._unauthorized(request, response);
       }
     }
 
@@ -286,7 +322,7 @@ export class HttpAuthxInterceptor<
     );
     if (!scopesAgainstGrants) {
       this.logger.debug({ scopes, grants }, 'Request failed to validate scopes against grants.');
-      return this._forbidden(response);
+      return this._forbidden(request, response, scopes);
     }
 
     const scopesAgainstRights = await this._validateScopesAgainstRights(
@@ -295,7 +331,7 @@ export class HttpAuthxInterceptor<
     );
     if (!scopesAgainstRights) {
       this.logger.debug({ scopes, grants }, 'Request failed to validate scopes against rights.');
-      return this._forbidden(response);
+      return this._forbidden(request, response, scopes);
     }
 
     // SUCCESSFULLY COMPLETED, LET'S DO AN APP THING
