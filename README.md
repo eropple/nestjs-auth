@@ -6,6 +6,16 @@
 employer and by other NestJS users.
 
 ### Recent Changes ###
+#### 0.4.0 ####
+- Added `unauthorizedResponse` and `forbiddenResponse` to the interceptor's
+  options. These allow you to customize the output of 401s and 403s emitted by
+  `@eropple/nestjs-auth` such that they can be predictable shapes in your
+  codebase. This feature is designed to be used with
+  [@eropple/nestjs-openapi3](https://github.com/eropple/nestjs-openapi3) so that
+  you can easily provide a typed schema for your errors, but the world is your
+  oyster!
+- Minor doc improvements.
+
 #### 0.3.0 / 0.3.1 (bug fix) ####
 - `nestjs-auth` now expects template arguments around principals and (optionally)
   credentials. Take a look at [the example](https://github.com/eropple/nestjs-auth-example)
