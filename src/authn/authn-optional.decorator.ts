@@ -11,6 +11,9 @@ import { AuthnStatus } from './authn-status.enum';
  * The principal and credential are undefined; the scopes are whatever you've
  * set as the application's anonymous scopes.
  *
+ * This differs from `AuthSkip` in that if you send _bad_ auth,
+ * `AuthOptional` will fail and `AuthnSkip` will succeed
+ *
  * Formally, the @Identity parameter should take as a type something that looks
  * like `IdentityBill<TPrincipal, TCredential> | AnonymousBill`.
  */
