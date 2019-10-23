@@ -1,6 +1,6 @@
 {
   "name": "@eropple/nestjs-auth",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Comprehensive handling of authentication and authorization for NestJS.",
   "main": "dist",
   "author": "Ed Ropple",
@@ -18,8 +18,8 @@
     "prepare": "yarn lint && yarn build"
   },
   "peerDependencies": {
-    "@nestjs/common": "^6.5.0",
-    "@nestjs/core": "^6.5.0",
+    "@nestjs/common": ">=6.5.0",
+    "@nestjs/core": ">=6.5.0",
     "rxjs": ">=6.4.0"
   },
   "devDependencies": {

@@ -6,6 +6,11 @@
 employer and by other NestJS users.
 
 ### Recent Changes ###
+#### 0.4.1 ####
+- Added `@AuthnSkip` decorator. This completely omits the endpoint from any
+  checking, _including_ any context functions that may attach data to your
+  `req.locals` instance. Thanks to Brian Kracoff @ Hydrow for the contribution.
+
 #### 0.4.0 ####
 - Added `unauthorizedResponse` and `forbiddenResponse` to the interceptor's
   options. These allow you to customize the output of 401s and 403s emitted by
