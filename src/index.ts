@@ -6,6 +6,7 @@ export * from './authn/options';
 export * from './authn/authn-disallowed.decorator';
 export * from './authn/authn-optional.decorator';
 export * from './authn/authn-required.decorator';
+export * from './authn/authn-skip.decorator';
 export * from './authn/authn-status.enum';
 
 export * from './authz/options';
