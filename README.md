@@ -145,10 +145,16 @@ collapses them into a single interceptor.
   its own.
 - `HttpAuthnInterceptor` inspects the controller and its handler. By default,
   _all endpoints_ require authentication, but you can decorate your handlers
-  with `@AuthnOptional()` to allow anonymous identities or with
-  `@AuthnDisallowed()` to _require_ them. If the handler's requirement matches
-  up with the identity on the request, the request continues; otherwise, the
-  response is a 401 Unauthorized.
+  with `@AuthnOptional()` to allow anonymous identities, with
+  `@AuthnDisallowed()` to _require_ them or with `@AuthnSkip()` to skip the checks entirely.
+  If the handler's requirement matches up with the identity on the request,
+  the request continues; otherwise, the response is a 401 Unauthorized.
+
+|| @AuthnRequired | @AuthnOptional | @AuthnDisallowed | @AuthnSkip |
+|-|-|-|-|-|
+| Good Auth |✅|✅|❌|✅|
+| Bad Auth  |❌|❌|❌|✅|
+| No Auth   |❌|✅|✅|✅|
 
 
 #### Authorization ####

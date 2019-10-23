@@ -34,7 +34,7 @@ const nanomatch = require('nanomatch');
 export interface HttpAuthxOptions<
   TIdentity extends IdentityBill,
   TIdentifiedBill extends IdentifiedBillBase
-> {
+  > {
   /**
    * An optional logger that will provide detailed introspection into the
    * behavior of the interceptor.
@@ -78,7 +78,7 @@ export interface HttpAuthxOptions<
  * For authentication (formerly `HttpAuthnInterceptor`), this takes a
  * user-defined function (see `HttpAuthnOptions`) and determines from it the
  * current state of the requestor's identity. It then uses the `@AuthnXXX()`
- * family of decorators (`@AuthnRequired()`, `@AuthnOptional()`, and
+ * family of decorators (`@AuthnRequired()`, `@AuthnOptional()`, `@AuthnSkip()` and
  * `@AuthnDisallowed()`) to decide whether or not to return a 401 Unauthorized
  * to the requestor or to pass the request on down the chain.
  *
@@ -97,7 +97,7 @@ export interface HttpAuthxOptions<
 export class HttpAuthxInterceptor<
   TIdentityBill extends IdentityBill,
   TIdentifiedBill extends IdentifiedBillBase
-> implements NestInterceptor {
+  > implements NestInterceptor {
   private readonly logger: Bunyan;
   private readonly tree: RightsTree<
     TIdentityBill,
@@ -145,22 +145,16 @@ export class HttpAuthxInterceptor<
 
   private _shortCircuitBadAuth(
     identity: IdentityBill,
-    controller: Type<any>,
-    // we get this from NestJS/rxjs
-    // tslint:disable-next-line: ban-types
-    handler: Function,
+    status: AuthnStatus,
   ): boolean {
-    const status: AuthnStatus =
-      Reflect.getMetadata(AUTHN_STATUS, handler) ||
-      Reflect.getMetadata(AUTHN_STATUS, controller) ||
-      AuthnStatus.REQUIRED;
-
     switch (status) {
       case AuthnStatus.REQUIRED:
         return identity.isIdentified;
       case AuthnStatus.DISALLOWED:
         return identity.isAnonymous;
       case AuthnStatus.OPTIONAL:
+        return true; // doesn't matter
+      case AuthnStatus.SKIP:
         return true; // doesn't matter
       default:
         throw new Error(
@@ -295,6 +289,15 @@ export class HttpAuthxInterceptor<
     const response: ServerResponse = context.switchToHttp().getResponse();
     const controller = context.getClass();
     const handler = context.getHandler();
+    const status: AuthnStatus =
+      Reflect.getMetadata(AUTHN_STATUS, handler) ||
+      Reflect.getMetadata(AUTHN_STATUS, controller) ||
+      AuthnStatus.REQUIRED;
+
+    if (status === AuthnStatus.SKIP) {
+      // Skip auth checks entirely
+      return next.handle();
+    }
 
     // BEGINNING AUTHN STEP
     const authn = await this._doAuthn(request);
@@ -307,7 +310,7 @@ export class HttpAuthxInterceptor<
       // (this confuses the typechecker but it is correct in practice)
       (request.identity as any) = this._buildIdentity(authn);
 
-      if (!this._shortCircuitBadAuth(request.identity, controller, handler)) {
+      if (!this._shortCircuitBadAuth(request.identity, status)) {
         return this._unauthorized(request, response);
       }
     }
