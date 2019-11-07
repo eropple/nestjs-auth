@@ -6,6 +6,14 @@
 employer and by other NestJS users.
 
 ### Recent Changes ###
+#### 0.5.0 ####
+- `@AuthzScope()` is now stackable. If you use it multiple times on the same
+  handler, the scopes checked will be the union of all of them.
+- `@AuthzAdoptScopeFrom()` added. It takes a controller and the name of a
+  handler (which are typechecked, even though the syntax is a bit gross) and
+  unions the scopes specified by that handler with any scopes specified for
+  the current one. Thanks to Brian Kracoff @ Hydrow for the idea.
+
 #### <s>0.4.1</s> 0.4.2 ####
 - Added `@AuthnSkip` decorator. This completely omits the endpoint from any
   checking, _including_ any context functions that may attach data to your
