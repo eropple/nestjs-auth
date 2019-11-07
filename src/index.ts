@@ -10,7 +10,7 @@ export * from './authn/authn-skip.decorator';
 export * from './authn/authn-status.enum';
 
 export * from './authz/options';
-export * from './authz/authz-scope.decorator';
+export * from './authz/decorators';
 export * from './authz/rights-tree';
 
 export * from './http-authx.interceptor';

@@ -25,7 +25,7 @@ import { observableResponse } from './util';
 import { HttpAuthnOptions, PrincipalFnRet } from './authn/options';
 import { HttpAuthzOptions } from './authz/options';
 import { RightsTree } from './authz/rights-tree';
-import { AuthzScopeArg, AuthzScopeArgFn } from './authz/authz-scope.decorator';
+import { AuthzScopeArg, AuthzScopeArgFn } from './authz/decorators';
 
 // TODO: create a types library for nanomatch
 // tslint:disable-next-line: no-var-requires

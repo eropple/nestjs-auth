@@ -1,4 +1,9 @@
 // tslint:disable: max-classes-per-file
+export interface AnyCtor<T> {
+  new(...args: Array<any>): T;
+  prototype: {};
+}
+
 export interface IdentityBill {
   grants: ReadonlyArray<string>;
 
