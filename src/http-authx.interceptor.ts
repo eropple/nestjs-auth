@@ -1,11 +1,11 @@
 import * as Bunyan from 'bunyan';
 import bunyanBlackHole from 'bunyan-blackhole';
+import * as _ from 'lodash';
 import {
   CallHandler,
   ExecutionContext,
   NestInterceptor,
   Type,
-  flatten,
 } from '@nestjs/common';
 import { ServerResponse } from 'http';
 import { Observable } from 'rxjs';
@@ -17,6 +17,7 @@ import {
   IdentityBill,
   AnonymousBill,
   IdentifiedBillBase,
+  AnyCtor,
 } from './types';
 import { StringTo, IdentifiedExpressRequest } from './helper-types';
 import { AuthnStatus } from './authn/authn-status.enum';
@@ -26,6 +27,7 @@ import { HttpAuthnOptions, PrincipalFnRet } from './authn/options';
 import { HttpAuthzOptions } from './authz/options';
 import { RightsTree } from './authz/rights-tree';
 import { AuthzScopeArg, AuthzScopeArgFn } from './authz/decorators';
+import { getAllPropertyMetadata } from './metadata';
 
 // TODO: create a types library for nanomatch
 // tslint:disable-next-line: no-var-requires
@@ -179,36 +181,37 @@ export class HttpAuthxInterceptor<
 
   private _getScopes(
     request: IdentifiedExpressRequest<TIdentityBill>,
+    controller: AnyCtor<any>,
     // we get this from NestJS/rxjs
     // tslint:disable-next-line: ban-types
     handler: Function,
   ): ReadonlyArray<string> {
-    const scopesArg: AuthzScopeArg | undefined = Reflect.getMetadata(
-      AUTHZ_SCOPES,
-      handler,
-    );
-    if (!scopesArg) {
+    const metadata = getAllPropertyMetadata(controller.prototype, handler.name);
+    const scopesArgs: Array<AuthzScopeArg> | undefined = metadata[AUTHZ_SCOPES];
+
+    if (!scopesArgs) {
       throw new Error(
         `Handler for request '${request.url}' does not have @AuthzScope().`,
       );
     }
 
-    let scopes: Array<string> | string;
+    const scopes: Array<string> = _.flattenDeep(scopesArgs.map(scopesArg => {
+      if (typeof scopesArg !== 'function') {
+        return scopesArg;
+      } else {
+        return (scopesArg as AuthzScopeArgFn)(request);
+      }
+    }));
 
-    if (typeof scopesArg !== 'function') {
-      scopes = scopesArg;
-    } else {
-      scopes = (scopesArg as AuthzScopeArgFn)(request);
-    }
-
-    return flatten([scopes]);
+    return _.uniq(scopes);
   }
 
   private _validateScopesAgainstGrants(
     scopes: ReadonlyArray<string>,
     grants: ReadonlyArray<string>,
   ): boolean {
-    return nanomatch(scopes, grants).length === scopes.length;
+    const matches = nanomatch(scopes, grants);
+    return matches.length === scopes.length;
   }
 
   private async _validateScopeAgainstRights(
@@ -316,7 +319,7 @@ export class HttpAuthxInterceptor<
     }
 
     // AUTHN COMPLETED, BEGINNING AUTHZ STEP
-    const scopes = this._getScopes(request, handler);
+    const scopes = this._getScopes(request, controller, handler);
     const grants = request.identity.grants;
 
     const scopesAgainstGrants = this._validateScopesAgainstGrants(

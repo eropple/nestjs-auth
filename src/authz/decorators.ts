@@ -1,8 +1,7 @@
 import { AUTHZ_SCOPES } from '../metadata-keys';
 import { IdentifiedExpressRequest } from '../helper-types';
 import { IdentityBill, AnyCtor } from '../types';
-import { AppendArrayMetadata, getAllMetadata, getAllParameterMetadata } from '../metadata';
-import { Type } from '@nestjs/common';
+import { AppendArrayMetadata, getAllMetadata, getAllPropertyMetadata } from '../metadata';
 
 export type AuthzScopeArgFn<TIdentity extends IdentityBill = IdentityBill> = (
   req: IdentifiedExpressRequest<TIdentity>,
@@ -45,12 +44,11 @@ export function AuthzAdoptScopesFrom<T extends AnyCtor<any>, TIdentity extends I
   target: T,
   propertyKey: keyof T['prototype'],
 ): any {
-  const allMetadata = getAllParameterMetadata(target.prototype, String(propertyKey));
-
+  const allMetadata = getAllPropertyMetadata(target.prototype, String(propertyKey));
   const adoptedScopes: Array<AuthzScopeArg<TIdentity>> | undefined = allMetadata[AUTHZ_SCOPES];
 
   if (!adoptedScopes) {
-    throw new Error(`Attempted to adopt scopes from target '${target}', but none found.`);
+    throw new Error(`Attempted to adopt scopes from target '${target}', but none found: ${JSON.stringify(allMetadata)}.`);
   }
 
   return AppendArrayMetadata(AUTHZ_SCOPES, adoptedScopes);
