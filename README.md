@@ -2,10 +2,18 @@
 [![npm version](https://badge.fury.io/js/%40eropple%2Fnestjs-auth.svg)](https://badge.fury.io/js/%40eropple%2Fnestjs-auth)
 
 ## Current Status ##
-`0.3.x` is being used, in anger, on multiple production apps, at my current
+`0.5.x` is being used, in anger, on multiple production apps, at my current
 employer and by other NestJS users.
 
 ### Recent Changes ###
+#### 0.5.2 ####
+- Bug fix: not awaiting the `context` at the root of the authz tree. I will
+  probably rethink the types expressing that API to make this easier to catch
+  in the future; right now it's `any` and that is a smell.
+- Bug fix: when using multiple scopes on the same endpoint, the testing of
+  subsequent endpoints would result in re-setting `request.locals`. It no
+  longer does this.
+
 #### 0.5.1 ####
 - `@AuthzScope()` is now stackable. If you use it multiple times on the same
   handler, the scopes checked will be the union of all of them.
