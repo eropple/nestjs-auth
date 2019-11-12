@@ -228,7 +228,7 @@ export class HttpAuthxInterceptor<
 
     if (this.tree.context) {
       this.logger.trace('Running root node\'s context.');
-      this.tree.context('[ROOT]', request);
+      await this.tree.context('[ROOT]', request);
     }
 
     for (const scopePart of scopeParts) {
