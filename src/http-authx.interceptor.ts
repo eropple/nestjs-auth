@@ -224,8 +224,7 @@ export class HttpAuthxInterceptor<
       TIdentityBill,
       IdentifiedExpressRequest<TIdentityBill>
     > = this.tree;
-    const locals: { [key: string]: any } = {};
-    request.locals = locals;
+    request.locals = request.locals || {};
 
     if (this.tree.context) {
       this.logger.trace('Running root node\'s context.');
