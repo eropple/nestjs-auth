@@ -43,7 +43,7 @@
     "bunyan": "^1.8.12",
     "bunyan-blackhole": "^1.1.1",
     "cookie": "^0.4.0",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "nanomatch": "^1.2.13",
     "reflect-metadata": "^0.1.13",
     "utility-types": "^3.7.0"
