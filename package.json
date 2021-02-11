@@ -1,5 +1,5 @@
 {
-  "name": "@eropple/nestjs-auth",
+  "name": "@hydrow/nestjs-auth",
   "version": "0.5.2",
   "description": "Comprehensive handling of authentication and authorization for NestJS.",
   "main": "dist",
